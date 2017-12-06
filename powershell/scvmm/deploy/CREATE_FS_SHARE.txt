@@ -1,0 +1,6 @@
+﻿# Get Storage File Server 'D1071NEMO07'
+$storageFileServer = Get-SCStorageFileServer -ID "a74d87d7-5566-4b55-b981-f71303b74665"
+$storagePool = Get-SCStoragePool -ID "da7c170b-1200-489a-b4bf-210496548f2f"
+# Get Storage Classification 'silver'
+$storageClassification = Get-SCStorageClassification -ID "34b17b64-9107-461c-925d-461991540c4e"
+$storageFileShare = New-SCStorageFileShare -StorageFileServer $storageFileServer -StoragePool $storagePool -Name "CIFS_VMM_TEST0" -Description "" -SizeMB 102400 -RunAsynchronously -StorageClassification $storageClassification

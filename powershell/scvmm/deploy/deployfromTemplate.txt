@@ -1,0 +1,47 @@
+﻿# ------------------------------------------------------------------------------
+# Create Virtual Machine Wizard Script
+# ------------------------------------------------------------------------------
+# Script generated on Wednesday, November 29, 2017 1:33:47 AM by Virtual Machine Manager
+# 
+# For additional help on cmdlet usage, type get-help <cmdlet name>
+# ------------------------------------------------------------------------------
+
+
+New-SCVirtualScsiAdapter -VMMServer WIN-VMM2016.cluster.hyperv.drm.lab.emc.com -JobGroup 93b518c1-a7e2-4432-94c9-1bd142e0d49e -AdapterID 7 -ShareVirtualScsiAdapter $false -ScsiControllerType DefaultTypeNoType 
+
+
+New-SCVirtualDVDDrive -VMMServer WIN-VMM2016.cluster.hyperv.drm.lab.emc.com -JobGroup 93b518c1-a7e2-4432-94c9-1bd142e0d49e -Bus 0 -LUN 1 
+
+
+New-SCVirtualNetworkAdapter -VMMServer WIN-VMM2016.cluster.hyperv.drm.lab.emc.com -JobGroup 93b518c1-a7e2-4432-94c9-1bd142e0d49e -MACAddress "00:00:00:00:00:00" -MACAddressType Static -Synthetic -IPv4AddressType Static -IPv6AddressType Dynamic 
+
+$CPUType = Get-SCCPUType -VMMServer WIN-VMM2016.cluster.hyperv.drm.lab.emc.com | where {$_.Name -eq "3.60 GHz Xeon (2 MB L2 cache)"}
+$CapabilityProfile = Get-SCCapabilityProfile -VMMServer WIN-VMM2016.cluster.hyperv.drm.lab.emc.com | where {$_.Name -eq "Hyper-V"}
+
+New-SCHardwareProfile -VMMServer WIN-VMM2016.cluster.hyperv.drm.lab.emc.com -CPUType $CPUType -Name "Profileccdb8f12-9e17-44ae-a23f-4c5b328525d7" -Description "Profile used to create a VM/Template" -CPUCount 2 -MemoryMB 4096 -DynamicMemoryEnabled $false -MemoryWeight 5000 -CPUExpectedUtilizationPercent 20 -DiskIops 0 -CPUMaximumPercent 100 -CPUReserve 0 -NumaIsolationRequired $false -NetworkUtilizationMbps 0 -CPURelativeWeight 100 -HighlyAvailable $false -DRProtectionRequired $false -SecureBootEnabled $true -SecureBootTemplate "MicrosoftWindows" -CPULimitFunctionality $false -CPULimitForMigration $false -CheckpointType Production -CapabilityProfile $CapabilityProfile -Generation 2 -JobGroup 93b518c1-a7e2-4432-94c9-1bd142e0d49e 
+
+
+
+$Template = Get-SCVMTemplate -VMMServer WIN-VMM2016.cluster.hyperv.drm.lab.emc.com -ID "9664c8b4-3539-4fdb-abf4-be228d4c85d6" | where {$_.Name -eq "win16dc_sysprep"}
+$HardwareProfile = Get-SCHardwareProfile -VMMServer WIN-VMM2016.cluster.hyperv.drm.lab.emc.com | where {$_.Name -eq "Profileccdb8f12-9e17-44ae-a23f-4c5b328525d7"}
+
+$OperatingSystem = Get-SCOperatingSystem -VMMServer WIN-VMM2016.cluster.hyperv.drm.lab.emc.com -ID "0a393d1e-9050-4142-8e55-a86e4a555013" | where {$_.Name -eq "Windows Server 2016 Datacenter"}
+
+New-SCVMTemplate -Name "Temporary Template47396112-a078-484f-ae59-3e6504e7d4b4" -Template $Template -HardwareProfile $HardwareProfile -JobGroup 240df225-1619-4ba8-956b-4aa7e391d096 -ComputerName "fromspreptmp" -TimeZone 35 -GuiRunOnceCommands "sc start ""Automatos RPC Service (C#)""" -Workgroup "WORKGROUP" -AnswerFile $null -OperatingSystem $OperatingSystem 
+
+
+
+$template = Get-SCVMTemplate -All | where { $_.Name -eq "Temporary Template47396112-a078-484f-ae59-3e6504e7d4b4" }
+$virtualMachineConfiguration = New-SCVMConfiguration -VMTemplate $template -Name "fromspreptmp"
+Write-Output $virtualMachineConfiguration
+$vmHost = Get-SCVMHost -ID "d73c7596-dfd3-4d3d-baea-ba8521382f58"
+Set-SCVMConfiguration -VMConfiguration $virtualMachineConfiguration -VMHost $vmHost
+Update-SCVMConfiguration -VMConfiguration $virtualMachineConfiguration
+Set-SCVMConfiguration -VMConfiguration $virtualMachineConfiguration -ComputerName "fromspreptmp0"
+
+$AllNICConfigurations = Get-SCVirtualNetworkAdapterConfiguration -VMConfiguration $virtualMachineConfiguration
+
+
+
+Update-SCVMConfiguration -VMConfiguration $virtualMachineConfiguration
+New-SCVirtualMachine -Name "fromspreptmp" -VMConfiguration $virtualMachineConfiguration -Description "" -BlockDynamicOptimization $false -StartVM -JobGroup "240df225-1619-4ba8-956b-4aa7e391d096" -ReturnImmediately -StartAction "NeverAutoTurnOnVM" -StopAction "SaveVM"
